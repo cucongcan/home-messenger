@@ -1,0 +1,13 @@
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  # UDP port
+  port_range_number:
+    min: 4433
+    max: 4500
+  use_external_ip: true
+keys:
+  # Change to your key
+  devkey: "R1lK5bZkrWTqwo9MfGIibQ"
+  secret: "xz8E4cmtM0qybskSk1t7NA"

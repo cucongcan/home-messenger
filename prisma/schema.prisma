@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  username      String         @unique
+  password      String
+  avatarUrl     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relationships
+  participants  Participant[]
+  messages      Message[]
+  hostedCalls   CallSession[]  @relation("CallHost")
+  role          Role           @default(USER)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Conversation {
+  id          String        @id @default(uuid())
+  name        String?       // Null nếu là chat 1-1
+  isGroup     Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  
+  // Relationships
+  participants Participant[]
+  messages     Message[]
+  calls        CallSession[]
+}
+
+model Participant {
+  id             String       @id @default(uuid())
+  userId         String
+  conversationId String
+  joinedAt       DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([userId, conversationId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  content        String       @db.Text
+  type           MessageType  @default(TEXT)
+  senderId       String
+  conversationId String
+  createdAt      DateTime     @default(now())
+
+  sender         User         @relation(fields: [senderId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+}
+
+model CallSession {
+  id             String       @id @default(uuid())
+  conversationId String
+  hostId         String
+  livekitRoom    String       @unique // Room name trên LiveKit
+  status         CallStatus   @default(ACTIVE)
+  createdAt      DateTime     @default(now())
+  endedAt        DateTime?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  host           User         @relation("CallHost", fields: [hostId], references: [id])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  CALL_LOG
+}
+
+enum CallStatus {
+  ACTIVE
+  ENDED
+  MISSED
+}
